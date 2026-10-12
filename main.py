@@ -18,12 +18,10 @@ if not ELEVENLABS_API_KEY:
 
 elevenlabs_client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
 
-# Load Open-Source Whisper locally
 print("Loading local Whisper model...")
-whisper_model = whisper.load_model("base") # 'tiny' is faster, 'base' is more accurate
+whisper_model = whisper.load_model("base") 
 print("Whisper loaded!")
 
-# Chat history to give the AI memory of the run
 chat_history = [
     {
         "role": "system",
@@ -36,23 +34,19 @@ chat_history = [
     }
 ]
 
-# Audio recording parameters
 SAMPLE_RATE = 16000
 
 def record_and_transcribe(duration=5):
     """Records audio for a set duration and transcribes it locally using Whisper"""
     print("\n Listening... (Speak now)")
     try:
-        # Record audio from microphone
         audio_data = sd.rec(int(duration * SAMPLE_RATE), samplerate=SAMPLE_RATE, channels=1, dtype='float32')
-        sd.wait() # Wait until recording is finished
+        sd.wait() 
         
-        # Transcribe locally (No internet needed!)
         result = whisper_model.transcribe(audio_data.flatten(), fp16=False)
         raw_text = result.get("text")
         text = raw_text.strip() if isinstance(raw_text, str) else ""
         
-        # Filter out Whisper hallucinations
         if text and text.lower() not in ["you", "thank you", "the", ""]:
             print(f"Runner said: {text}")
             return text
@@ -65,7 +59,7 @@ def speak(text):
     print(f"Pacer: {text}")
     try:
         audio = elevenlabs_client.text_to_speech.convert(
-            voice_id="21m00Tcm4TlvDq8ikWAM",  # Rachel voice ID
+            voice_id="21m00Tcm4TlvDq8ikWAM",  
             text=text,
             model_id="eleven_multilingual_v2",
             voice_settings=VoiceSettings(
@@ -80,7 +74,6 @@ def get_ai_response(user_input):
     """Gets a response from the local Llama 3 model via Ollama"""
     chat_history.append({"role": "user", "content": user_input})
     
-    # Local inference (No internet needed!)
     response = ollama.chat(model='llama3', messages=chat_history)
     
     ai_message = response['message']['content']
@@ -103,7 +96,6 @@ def proactive_coach():
         ai_message = get_ai_response(prompt)
         speak(ai_message)
 
-# --- MAIN RUN LOOP ---
 def start_run():
     speak("Hey runner! Pacer is online. My brain is running locally, so you don't need the internet. Put your phone in your armband and let's hit the trail. Press SPACEBAR to talk to me, or just keep running. I'll check in periodically.")
 
@@ -115,10 +107,8 @@ def start_run():
     
     while True:
         try:
-            # Wait for spacebar press (simulating a bluetooth headphone button)
             keyboard.wait('space')
             
-            # Record for 5 seconds and transcribe locally
             user_speech = record_and_transcribe(duration=5)
             
             if user_speech:
